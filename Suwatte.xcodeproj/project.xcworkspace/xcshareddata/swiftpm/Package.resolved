@@ -293,8 +293,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Suwatte/Texture",
       "state" : {
-        "revision" : "514619ce95f42e1dcbe9e54d4443f6e52fb251ba",
-        "version" : "3.1.1"
+        "revision" : "e524629533fb8a7a902267c366fe554155dc6a5e",
+        "version" : "3.2.0"
       }
     },
     {
