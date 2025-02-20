@@ -106,7 +106,12 @@ extension ImageNode {
         super.didEnterDisplayState()
         loadImage()
     }
-
+    
+    override func didEnterPreloadState() {
+        super.didEnterPreloadState()
+        loadImage()
+    }
+    
     override func didEnterVisibleState() {
         super.didEnterVisibleState()
         loadImage()
