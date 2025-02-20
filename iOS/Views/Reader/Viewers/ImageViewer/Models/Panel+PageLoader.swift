@@ -31,7 +31,7 @@ extension PanelActor {
         }
     }
 
-    func loadPage(for data: PageData) async throws -> AsyncImageTask {
+    func loadPage(for data: PageData) async throws -> ImageTask {
         let request = try await getImageRequest(for: data)
         guard let request else {
             throw DSK.Errors.NamedError(name: "PanelPageLoader", message: "No handler resolved the requested page.")
