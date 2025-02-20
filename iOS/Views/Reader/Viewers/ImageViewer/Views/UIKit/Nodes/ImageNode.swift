@@ -11,7 +11,12 @@ import Nuke
 import UIKit
 
 class ImageNode: ASCellNode {
-    let imageNode = BareBonesImageNode()
+    private let imageNode = BareBonesImageNode()
+    
+    func image() -> UIImage? {
+        imageNode.image
+    }
+    
     private let progressNode = ASDisplayNode(viewBlock: {
         CircularProgressView()
     })
@@ -99,24 +104,20 @@ class ImageNode: ASCellNode {
 extension ImageNode {
     override func didEnterDisplayState() {
         super.didEnterDisplayState()
-    }
-
-    override func didEnterPreloadState() {
-        super.didEnterPreloadState()
         loadImage()
     }
 
     override func didEnterVisibleState() {
         super.didEnterVisibleState()
-        guard imageNode.image == nil else { return }
         loadImage()
     }
-
-    override func didExitVisibleState() {
-        super.didExitVisibleState()
+    
+    override func didExitDisplayState() {
+        super.didExitDisplayState()
         if isZoomed { return }
         cancel()
         checkIfChapterDelegateShouldBeCalled()
+        reset()
     }
 }
 
@@ -231,6 +232,12 @@ extension ImageNode {
         nukeTask = nil
         isWorking = false
     }
+    
+    private func reset() {
+        imageNode.image = nil
+        imageNode.alpha = 0
+        progressNode.alpha = 1
+    }
 }
 
 extension ImageNode {
@@ -297,20 +304,14 @@ extension ImageNode {
     }
 
     func displayImage(_ image: UIImage) {
-        guard imageNode.image == nil else {
-            if !imageSetup {
-                postImageSetSetup()
-            }
-            return
+        if !imageSetup {
+            postImageSetSetup()
         }
         imageNode.image = image
         imageNode.shouldAnimateSizeChanges = false
         let size = image.size.scaledTo(UIScreen.main.bounds.size)
         frame = .init(origin: .init(x: 0, y: 0), size: size)
         ratio = size.height / size.width
-        if Task.isCancelled {
-            return
-        }
         transitionLayout(with: .init(min: .zero, max: size), animated: true, shouldMeasureAsync: false)
         Task { @MainActor [weak self] in
             self?.postImageSetSetup()
