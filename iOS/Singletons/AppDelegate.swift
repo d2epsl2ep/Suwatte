@@ -33,7 +33,7 @@ class STTAppDelegate: NSObject, UIApplicationDelegate {
             let dataCache = try? DataCache(name: "com.ceres.suwatte.nuke_cache")
             let imageCache = ImageCache.shared
             dataCache?.sizeLimit = 1024 * 1024 * 1024 // 1 GB
-            imageCache.costLimit = 1024 * 1024 * 1024 // 500 MB
+            imageCache.costLimit = 1024 * 1024 * 500 // 500 MB
             $0.dataLoader = DataLoader(configuration: nukeConfig)
             $0.imageCache = imageCache
             $0.dataCache = dataCache
