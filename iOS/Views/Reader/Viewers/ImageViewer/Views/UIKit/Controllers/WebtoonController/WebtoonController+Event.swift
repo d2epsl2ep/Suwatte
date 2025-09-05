@@ -6,6 +6,7 @@
 //
 
 import Foundation
+
 private typealias Controller = WebtoonController
 
 extension Controller {
@@ -68,14 +69,13 @@ extension Controller {
         Task {
             let actor = await RealmActor.shared()
 
-            let maxReadKey = await actor.getMaxReadKey(for: chapter.contentIdentifier)
-            guard maxReadKey < chapter.chapterOrderKey else { return }
             let progress = DSKCommon
                 .TrackProgressUpdate(chapter: chapter.number,
                                      volume: chapter.volume)
             await actor
                 .updateTrackProgress(for: chapter.STTContentIdentifier,
-                                     progress: progress)
+                                     progress: progress,
+                                     ignoreTrackerProgress: false)
         }
     }
 

@@ -108,16 +108,18 @@ struct NukeWhitespaceProcessor: ImageProcessing, Hashable {
                 let blue = data[idx + 3]
 
                 // White
-                if red > whiteThreshold
-                    && green > whiteThreshold
-                    && blue > whiteThreshold {
+                if red > whiteThreshold,
+                   green > whiteThreshold,
+                   blue > whiteThreshold
+                {
                     continue
                 }
 
                 // Black
-                if red < blackThreshold
-                    && green < blackThreshold
-                    && blue < blackThreshold {
+                if red < blackThreshold,
+                   green < blackThreshold,
+                   blue < blackThreshold
+                {
                     continue
                 }
 
@@ -128,7 +130,7 @@ struct NukeWhitespaceProcessor: ImageProcessing, Hashable {
             }
         }
 
-        if lowX > highX {
+        if lowX >= highX || lowY >= highY {
             return nil
         }
 
@@ -163,12 +165,17 @@ struct NukeDownsampleProcessor: ImageProcessing, Hashable {
             return image
         }
 
-        let size = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
+        let size = CGSize(width: round(image.size.width * ratio),
+                          height: round(image.size.height * ratio))
 
-        let data = image.pngData()
+        let data = if let data = image.pngData() {
+            data
+        } else {
+            image.jpegData(compressionQuality: 1)
+        }
 
         guard let data, let out = ds(data, size, image.scale) else {
-            return nil
+            return image
         }
 
         return .init(cgImage: out, scale: image.scale, orientation: image.imageOrientation)
@@ -188,7 +195,7 @@ struct NukeDownsampleProcessor: ImageProcessing, Hashable {
             return nil
         }
 
-        let maxDimensionInPixels = max(size.width, size.height) * scale
+        let maxDimensionInPixels = round(max(size.width, size.height) * scale)
         let downsampleOptions: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceShouldCacheImmediately: true,
@@ -215,7 +222,7 @@ struct NukeSplitWidePageProcessor: ImageProcessing, Hashable {
     func process(_ image: Nuke.PlatformImage) -> Nuke.PlatformImage? {
         let isWide = image.size.ratio > 1
 
-        if isWide && !page.isSplitPageChild { // fire if the page is wide AND is the primary page
+        if isWide, !page.isSplitPageChild { // fire if the page is wide AND is the primary page
             PanelPublisher.shared.willSplitPage.send(page)
         }
         return isWide ? split(take: half, image: image) : image

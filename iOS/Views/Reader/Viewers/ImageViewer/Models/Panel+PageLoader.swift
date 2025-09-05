@@ -14,7 +14,7 @@ import UIKit
 // Global actor that handles image loading
 @globalActor actor PanelActor: GlobalActor {
     static let shared = PanelActor()
-    public static func run<T>(resultType _: T.Type = T.self, body: @Sendable () async throws -> T) async rethrows -> T where T: Sendable {
+    static func run<T>(resultType _: T.Type = T.self, body: @Sendable () async throws -> T) async rethrows -> T where T: Sendable {
         try await body()
     }
 }
@@ -31,7 +31,7 @@ extension PanelActor {
         }
     }
 
-    func loadPage(for data: PageData) async throws -> AsyncImageTask {
+    func loadPage(for data: PageData) async throws -> ImageTask {
         let request = try await getImageRequest(for: data)
         guard let request else {
             throw DSK.Errors.NamedError(name: "PanelPageLoader", message: "No handler resolved the requested page.")
@@ -49,6 +49,7 @@ extension PanelActor {
         var processors = [ImageProcessing]()
         let cropWhiteSpaces = Preferences.standard.cropWhiteSpaces
         let downSampleImage = Preferences.standard.downsampleImages
+        let isVertical = Preferences.standard.currentReadingMode == .VERTICAL
 
         let readingMode = Preferences.standard.currentReadingMode
         let shouldSplit = [ReadingMode.PAGED_COMIC, .PAGED_MANGA].contains(readingMode) && Preferences.standard.splitWidePages && Preferences.standard.imageScaleType != .height && Preferences.standard.imageScaleType != .stretch
@@ -86,7 +87,7 @@ extension PanelActor {
             }
         }
 
-        if cropWhiteSpaces {
+        if cropWhiteSpaces, !isVertical {
             processors.append(NukeWhitespaceProcessor())
         }
 

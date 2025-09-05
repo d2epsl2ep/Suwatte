@@ -148,6 +148,8 @@ enum STTKeys {
     static let RunnerDevMode = "DEBUG.RUNNER_DEV_MODE"
     static let LogAddress = "DEBUG.LOG_ADDRESS"
 
+    static let UseWebKitDirective = "EXPERIMENTAL.USE_WEBKIT"
+
     static func SourceChapterProviderPriority(_ id: String) -> String {
         "RUNNER.SCPP:\(id)"
     }
@@ -165,7 +167,7 @@ enum STTKeys {
     static let SyncDatabase = "APP.sync_db"
 
     static let UseCompactLibraryView = "APP.compact_library"
-    
+
     static let TrackerAutoSync = "APP.tracker_auto_sync"
 
     static let ImageScaleType = "READER.image_scale"
@@ -183,4 +185,5 @@ enum STTKeys {
     static let ReaderBottomScrollbarDirection = "READER.bottom_scrollbar_direction"
     static let ReaderScrollbarWidth = "READER.scrollbar_width"
     static let ReaderHideMenuOnSwipe = "READER.hide_menu_on_swipe"
+    static let AutoDeleteCompletedChapters = "APP.auto_delete_completed_chapters"
 }

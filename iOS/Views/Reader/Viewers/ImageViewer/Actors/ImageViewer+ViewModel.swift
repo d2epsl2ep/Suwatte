@@ -79,7 +79,6 @@ extension IVViewModel {
         let pageCount = await dataCache.getCount(requested.id)
         // Check DB For Last Known State
         if pendingState?.pageIndex == nil {
-
             let values = await STTHelpers.getInitialPanelPosition(for: requested.id, limit: pageCount)
             pendingState?.pageIndex = values.0
             pendingState?.pageOffset = values.1
@@ -129,6 +128,7 @@ extension IVViewModel {
     func resetToChapter(_ chapter: ThreadSafeChapter) async {
         pendingState = .init(chapter: chapter)
         presentationState = .loading
+        loadState = [:]
         // Load Initial Chapter
         do {
             try await dataCache.load(for: chapter)

@@ -16,7 +16,6 @@ struct LoadableView<Value, Idle, Loading, Content>: View where Idle: View,
     let idle: () -> Idle
     let loading: () -> Loading
     let action: () async throws -> Value
-    @State private var loaded = false
 
     let runnerID: String?
     init(
@@ -36,48 +35,40 @@ struct LoadableView<Value, Idle, Loading, Content>: View where Idle: View,
     }
 
     var body: some View {
-        ZStack {
-            switch loadable {
-            case .idle:
-                idle()
-                Rectangle()
-                    .hidden()
-                    .onAppear {
-                        Task {
-                            if loaded {
-                                loaded = false
-                                await load()
-                            }
-                        }
-                    }
-                    .transition(.opacity)
-
-            case .loading:
-                loading()
-                    .transition(.opacity)
-
-            case let .loaded(value):
-                content(value)
-                    .transition(.opacity)
-
-            case let .failed(error):
-                ErrorView(error: error, runnerID: runnerID) {
-                    await animate {
-                        loadable = .idle
+        switch loadable {
+        case .idle:
+            idle()
+            Rectangle()
+                .hidden()
+                .onAppear  {
+                    Task {
+                        await load()
                     }
                 }
                 .transition(.opacity)
+
+        case .loading:
+            loading()
+                .transition(.opacity)
+
+        case let .loaded(value):
+            content(value)
+                .transition(.opacity)
+
+        case let .failed(error):
+            ErrorView(error: error, runnerID: runnerID) {
+                await animate {
+                    loadable = .idle
+                }
             }
+            .transition(.opacity)
         }
-        .task {
-            await load()
-        }
+
     }
 }
 
 extension LoadableView {
-    private func load() async {
-        guard !loaded else { return }
+    private func load(force: Bool = false) async {
         do {
             await animate {
                 loadable = .loading
@@ -95,7 +86,6 @@ extension LoadableView {
                 loadable = .failed(error)
             }
         }
-        loaded = true
     }
 }
 
@@ -184,6 +174,7 @@ struct OldLoadableView<Value, Idle, Loading, Failure, Content>: View where Idle:
                             await load()
                         }
                     }
+
             case .loading:
                 loading()
                     .transition(.opacity)

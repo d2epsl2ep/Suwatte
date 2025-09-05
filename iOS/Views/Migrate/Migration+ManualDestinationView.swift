@@ -27,9 +27,9 @@ struct MigrationManualDestinationView: View {
 
                 // We need to create the ContentIdentifier here because the match still only has the contentId without the Source
                 let exactMatchContentIdentifier = ContentIdentifier(contentId: exactMatch.id, sourceId: resultGroup.sourceID)
-                
+
                 // If the exact match is the same item, skip
-                if exactMatchContentIdentifier.id == content.id {
+                if searchModel.getSelectedSourceCount() > 1 && exactMatchContentIdentifier.id == content.id {
                     return false
                 }
             }
@@ -66,7 +66,6 @@ struct MigrationManualDestinationView: View {
             searchTask?.cancel()
             searchTask = Task {
                 await searchModel.makeRequests()
-                searchModel.removeContentFromResult(contentIdentifier: ContentIdentifier(contentId: content.contentID, sourceId: content.sourceID))
             }
         }
         .onAppear {
@@ -103,7 +102,13 @@ struct MigrationManualDestinationResultGroupCell: View {
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 Task {
-                                    let chapterCount = await model.getChapters(for: result.sourceID, id: highlight.id)?.count ?? nil
+                                    let chapters = await model.getChapters(for: result.sourceID, id: highlight.id)
+                                    if var chapters = chapters {
+                                        chapters = STTHelpers.filterChapters(chapters, with: .init(contentId: highlight.id, sourceId: result.sourceID))
+                                        await model.storeChapters(chapters: chapters
+                                            .map { $0.toStoredChapter(sourceID: result.sourceID, contentID: highlight.id) })
+                                    }
+                                    let chapterCount = chapters?.count ?? nil
                                     model.operations[content.id] = .found(.init(from: highlight,
                                                                                 with: result.sourceID), chapterCount)
                                     model.selectedToSearch = nil

@@ -40,6 +40,7 @@ public class WKRunner: DSKRunner {
         """
         info = try await eval(infoScript)
         intents = try await eval(intentsScript)
+        saveState()
     }
 
     func handleURL(url: String) async throws -> DSKCommon.DeepLinkContext? {
@@ -90,7 +91,7 @@ extension WKBootstrapper: WKScriptMessageHandler {
         wv = nil
     }
 
-    public func userContentController(_: WKUserContentController, didReceive message: WKScriptMessage) {
+    func userContentController(_: WKUserContentController, didReceive message: WKScriptMessage) {
         let msg = message.body as? String
         guard let msg else { return }
         switch msg {

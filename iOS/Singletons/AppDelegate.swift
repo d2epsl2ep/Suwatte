@@ -33,11 +33,12 @@ class STTAppDelegate: NSObject, UIApplicationDelegate {
             let dataCache = try? DataCache(name: "com.ceres.suwatte.nuke_cache")
             let imageCache = ImageCache.shared
             dataCache?.sizeLimit = 1024 * 1024 * 1024 // 1 GB
-            imageCache.costLimit = 200 * 1024 * 1024 // 500 MB
-            imageCache.countLimit = 100 // 100 Images
+            imageCache.costLimit = 1024 * 1024 * 500 // 500 MB
             $0.dataLoader = DataLoader(configuration: nukeConfig)
             $0.imageCache = imageCache
             $0.dataCache = dataCache
+            $0.dataCachePolicy = .automatic
+            $0.isStoringPreviewsInMemoryCache = false
         }
 
         ImagePipeline.shared = pipeline
@@ -50,7 +51,7 @@ class STTAppDelegate: NSObject, UIApplicationDelegate {
                 MigrationHelper.migrateInteractorStoreObjects(migration: migration)
             }
         }, shouldCompactOnLaunch: { totalBytes, usedBytes in
-            return (Double(usedBytes) / Double(totalBytes)) < 0.5
+            (Double(usedBytes) / Double(totalBytes)) < 0.5
         })
 
         let directory = FileManager.default.applicationSupport.appendingPathComponent("Database", isDirectory: true)

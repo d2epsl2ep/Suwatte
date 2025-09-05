@@ -17,7 +17,7 @@ extension RealmActor {
 
         if let target {
             await operation {
-                values.forEach { key, value in
+                for (key, value) in values {
                     let pctEncodedKey = key.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!
                     target.data.updateValue(value, forKey: pctEncodedKey)
                 }
@@ -27,7 +27,7 @@ extension RealmActor {
 
         let obj = TrackerLink()
         obj.id = id
-        values.forEach { key, value in
+        for (key, value) in values {
             let pctEncodedKey = key.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!
             obj.data.updateValue(value, forKey: pctEncodedKey)
         }
@@ -67,26 +67,26 @@ extension RealmActor {
         let trackerLinkData = realm
             .objects(TrackerLink.self)
             .where { $0.id.in(targets) }
-            .flatMap { $0.data.asKeyValueSequence() }
 
         // Add Values from TrackerLinks
         var dict: [String: String] = [:]
-        for (key, value) in trackerLinkData {
-            dict[key] = value
-        }
-        
-        // Add Values from Stored Content
-        if Preferences.standard.trackerAutoSync {
-            let contentTrackerData = linked
-                .appending(content)
-                .flatMap { $0.trackerInfo.asKeyValueSequence() }
-
-            for (key, value) in contentTrackerData {
+        for object in trackerLinkData {
+            for (key, value) in object.data {
                 dict[key] = value
             }
         }
 
+        // Add Values from Stored Content
+        if Preferences.standard.trackerAutoSync {
+            let contentTrackerData = linked
+                .appending(content)
 
+            for object in contentTrackerData {
+                for (key, value) in object.trackerInfo {
+                    dict[key] = value
+                }
+            }
+        }
 
         return dict.filter { !$0.value.isEmpty }
     }
@@ -111,7 +111,7 @@ extension RealmActor {
         return matches
     }
 
-    func updateTrackProgress(for id: String, progress: DSKCommon.TrackProgressUpdate) async {
+    func updateTrackProgress(for id: String, progress: DSKCommon.TrackProgressUpdate, ignoreTrackerProgress: Bool = true) async {
         let links = await getTrackerLinks(for: id)
 
         for (trackerId, mediaId) in links {
@@ -119,6 +119,15 @@ extension RealmActor {
             do {
                 let user = try await tracker.getAuthenticatedUser()
                 guard user != nil else { continue }
+
+                if !ignoreTrackerProgress {
+                    let entry = try await tracker.getTrackItem(id: mediaId).entry
+                    guard let entry, let chapterProgress = progress.chapter else { continue }
+
+                    if chapterProgress <= entry.progress.lastReadChapter {
+                        continue
+                    }
+                }
             } catch {
                 Logger.shared.error(error, trackerId)
             }

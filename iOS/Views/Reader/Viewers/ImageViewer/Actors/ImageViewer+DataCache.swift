@@ -42,6 +42,7 @@ final actor IVDataCache {
     }
 
     func load(for chapter: ThreadSafeChapter) async throws {
+        guard get(chapter.id) == nil else { return }
         let data = try await getData(chapter)
         let pages = try data.getPages()
         cache.updateValue(pages, forKey: chapter.id)
@@ -144,7 +145,6 @@ extension IVDataCache {
             return data.toStored(withStoredChapter: chapter.toStored()).toReadableChapterData(with: chapter)
 
         case .OPDS:
-
             let baseLink = chapter.chapterId
             let publication = await actor.getPublication(id: chapter.id)
             guard let publication, let client = publication.client else {

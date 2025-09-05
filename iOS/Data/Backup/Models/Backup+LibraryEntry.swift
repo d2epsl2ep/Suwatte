@@ -26,8 +26,7 @@ extension LibraryEntry: Codable {
 
         if schemaVersion > 15 {
             id = try container.decode(String.self, forKey: .id)
-        }
-        else {
+        } else {
             content = try container.decode(StoredContent.self, forKey: .content)
         }
         updateCount = try container.decode(Int.self, forKey: .updateCount)
@@ -55,12 +54,9 @@ extension LibraryEntry: Codable {
         try container.encode(lastOpened, forKey: .lastOpened)
         try container.encode(linkedHasUpdates, forKey: .linkedHasUpdates)
     }
-    
-    func fillContent(data: [StoredContent]?) throws {
-        content = data!.first { $0.id == id }
-        if content == nil {
-            throw DSK.Errors.NamedError(name: "Restore Backup", message: "No content found for library entry with the id \(id)")
-        }
+
+    func fillContent(data: [String: [StoredContent]]) {
+        content = data[id]?.first
     }
 }
 

@@ -36,7 +36,8 @@ extension RealmActor {
             .objects(ContentLink.self)
             .where { $0.entry != nil && !$0.entry.isDeleted
                 && $0.content != nil && !$0.content.isDeleted
-                && !$0.isDeleted }
+                && !$0.isDeleted
+            }
             .freeze()
 
         let lists = realm
@@ -57,7 +58,7 @@ extension RealmActor {
         backup.collections = collections.toArray()
         backup.lists = lists.toArray()
         backup.runners = runners.toArray()
-        backup.contentLinks = contentLinks.map(CodableContentLink.from(contentLink: ))
+        backup.contentLinks = contentLinks.map(CodableContentLink.from(contentLink:))
         return backup
     }
 }
@@ -119,11 +120,12 @@ extension RealmActor {
     func restoreBackup(backup: Backup) async throws {
         try await resetDB()
 
+        let storedContentDict: [String: [StoredContent]] = Dictionary(grouping: backup.storedContents ?? [], by: \.id)
         var progressMarkers: [ProgressMarker] = []
 
         if backup.schemaVersion > 15 {
             if let entries = backup.library {
-                try entries.forEach { try $0.fillContent(data: backup.storedContents ) }
+                entries.forEach { $0.fillContent(data: storedContentDict) }
             }
 
             if let entries = backup.progressMarkers {
@@ -137,13 +139,15 @@ extension RealmActor {
                         continue
                     }
 
-                    try chapter.fromBackup(data: backup.storedContents)
+                    chapter.updateFromBackup(data: storedContentDict)
                     progressMarkers.append(marker)
                 }
             }
         }
 
-        let contentLinks: [ContentLink] = try backup.contentLinks?.compactMap { try $0.restore(storedContent: backup.storedContents, library: backup.library) } ?? []
+        let contentLinks: [ContentLink] = backup.contentLinks?.compactMap { $0.restore(storedContent: storedContentDict, library: backup.library) } ?? []
+
+        let library = backup.library?.filter { $0.content != nil }
 
         try await realm.asyncWrite {
             if let markers = backup.markers {
@@ -154,7 +158,7 @@ extension RealmActor {
                 realm.add(storedContents, update: .all)
             }
 
-            if let library = backup.library {
+            if let library {
                 realm.add(library, update: .all)
             }
 
@@ -229,7 +233,6 @@ extension RealmActor {
         }
 
         try await realm.asyncWrite {
-
             realm.objects(ArchivedContent.self).setValue(true, forKey: "isDeleted") // 1. No relation
             realm.objects(CustomThumbnail.self).setValue(true, forKey: "isDeleted") // 7. Relation: CreamAsset
             realm.objects(LibraryCollectionFilter.self).setValue(true, forKey: "isDeleted") // 10. No relation
@@ -253,7 +256,6 @@ extension RealmActor {
             realm.delete(realm.objects(ChapterBookmark.self)) // 2. Relation: ChapterReference
             realm.delete(realm.objects(UpdatedBookmark.self)) // 26. Relation: ChapterReference, CreamAsset
             realm.delete(realm.objects(ProgressMarker.self)) // 12. Relation: ChapterReference
-
 
             // Relation: 14. StoredChapter, StoredContent
             let downloadedChapters = realm
