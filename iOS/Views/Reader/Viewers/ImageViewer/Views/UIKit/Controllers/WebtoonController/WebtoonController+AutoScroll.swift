@@ -6,6 +6,7 @@
 //
 
 import UIKit
+
 private typealias Controller = WebtoonController
 
 extension Controller {
@@ -14,6 +15,7 @@ extension Controller {
             cancelAutoScroll()
         } else {
             timer = Timer.scheduledTimer(timeInterval: 0.15, target: self, selector: #selector(timerAction), userInfo: nil, repeats: true)
+            UIApplication.shared.isIdleTimerDisabled = true
         }
     }
 
@@ -38,6 +40,7 @@ extension Controller {
             timer = nil
             onScrollStop()
             PanelPublisher.shared.autoScrollDidStop.send()
+            UIApplication.shared.isIdleTimerDisabled = false
         }
     }
 }
